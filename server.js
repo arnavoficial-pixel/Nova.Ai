@@ -41,7 +41,7 @@ app.post("/api/chat", async (req, res) => {
       });
       return { role: m.role, parts };
     });
-    const chosenModel = model === "gemini-2.5-pro" ? "gemini-2.5-pro" : "gemini-flash-latest";
+    const chosenModel = model === "gemini-3.7-flash" ? "gemini-3.7-flash" : "gemini-3.8-flash";
     const result = await ai.models.generateContent({
       model: chosenModel,
       contents: safeMessages,
