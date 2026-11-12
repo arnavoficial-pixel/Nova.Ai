@@ -10,6 +10,7 @@ const API_KEY = process.env.GEMINI_API_KEY;
 const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 app.use(helmet({ contentSecurityPolicy: false }));
+app.set("trust proxy", 1);
 app.use(express.json({ limit: "6mb" }));
 app.use("/api/", rateLimit({ windowMs: 60_000, limit: 25, standardHeaders: "draft-7", legacyHeaders: false }));
 app.use(express.static("public"));
