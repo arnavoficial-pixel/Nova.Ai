@@ -57,6 +57,53 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+
+const searchProviders = [
+  process.env.SEARXNG_URL,
+  "https://searx.be",
+  "https://search.sapti.me",
+  "https://searx.tiekoetter.com"
+].filter(Boolean);
+
+app.get("/api/siara/search", async (req, res) => {
+  const q = String(req.query.q || "").trim().slice(0, 240);
+  const mode = String(req.query.category || "general").toLowerCase();
+  if (!q) return res.status(400).json({ error: "Type something to search." });
+  const categoryMap = { web: "general", general: "general", images: "images", videos: "videos", news: "news", academic: "science", social: "general" };
+  const category = categoryMap[mode] || "general";
+  const query = mode === "social" ? `${q} (site:reddit.com OR site:quora.com)` : q;
+  let lastError = "Search providers are temporarily unavailable.";
+  for (const base of searchProviders) {
+    try {
+      const endpoint = new URL("/search", base);
+      endpoint.searchParams.set("q", query);
+      endpoint.searchParams.set("format", "json");
+      endpoint.searchParams.set("categories", category);
+      endpoint.searchParams.set("language", "en");
+      const response = await fetch(endpoint, {
+        headers: { "Accept": "application/json", "User-Agent": "SIARA/1.0 (integrated search)" },
+        signal: AbortSignal.timeout(9000)
+      });
+      if (!response.ok) { lastError = `Search source returned ${response.status}.`; continue; }
+      const data = await response.json();
+      if (!Array.isArray(data.results)) { lastError = "Search source returned an unsupported response."; continue; }
+      const results = data.results.slice(0, 20).map((item) => ({
+        title: String(item.title || "Untitled result").slice(0, 300),
+        url: String(item.url || ""),
+        snippet: String(item.content || item.title || "").slice(0, 700),
+        source: String(item.engine || item.source || "Web"),
+        category: String(item.category || category),
+        thumbnail: typeof item.thumbnail === "string" ? item.thumbnail : null,
+        publishedDate: item.publishedDate || null
+      })).filter((item) => /^https?:\\/\\//i.test(item.url));
+      return res.json({ query: q, category: mode, results, provider: new URL(base).hostname });
+    } catch (error) {
+      lastError = String(error?.message || lastError).slice(0, 180);
+    }
+  }
+  return res.status(503).json({ error: lastError, hint: "Try again in a moment; free public search sources can be busy." });
+});
+
 app.listen(PORT, () => {
   console.log(`Nova AI running on port ${PORT}`);
   if (!API_KEY) console.warn("Missing GEMINI_API_KEY.");
