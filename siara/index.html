@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080b14"><meta name="description" content="SIARA — a clean search launchpad for the web, images, videos, news and research.">
+<title>SIARA — Search Beyond</title>
+<style>
+:root{color-scheme:dark;--bg:#080b14;--panel:#101728;--line:#26324a;--muted:#98a7c2;--text:#f5f7ff;--a:#8b7cff;--b:#40d9c2}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:radial-gradient(ellipse at 50% 0%,#1c2450 0,transparent 42%),linear-gradient(160deg,#080b14,#0c1220 65%,#080b14);color:var(--text);display:flex;flex-direction:column}
+header{width:min(1120px,92%);margin:24px auto 0;display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.18em;font-size:19px}.mark{width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,var(--a),var(--b));display:grid;place-items:center;color:#07101a;font-size:23px;font-weight:900;box-shadow:0 8px 30px #746bff55}.tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:8px 12px;border-radius:999px}
+main{width:min(900px,92%);margin:clamp(70px,13vh,130px) auto 60px;text-align:center}.eyebrow{color:#a9a1ff;text-transform:uppercase;letter-spacing:.22em;font-size:11px;font-weight:800}.hero{font-size:clamp(42px,8vw,76px);line-height:1.02;letter-spacing:-.06em;margin:16px 0 14px}.hero span{background:linear-gradient(90deg,#a99dff,#56e5d0);color:transparent;background-clip:text}.sub{color:var(--muted);font-size:16px;line-height:1.6;margin:0 auto 34px;max-width:570px}
+.searchbox{background:#111a2c;border:1px solid #33415e;padding:9px;border-radius:20px;display:flex;gap:8px;box-shadow:0 24px 80px #0008;max-width:760px;margin:auto}.searchbox input{min-width:0;flex:1;background:transparent;border:0;outline:0;color:white;padding:12px 14px;font-size:16px}.searchbox input::placeholder{color:#71809c}.searchbox button{border:0;border-radius:14px;padding:0 24px;background:linear-gradient(110deg,#8b7cff,#42d9c4);color:#08111b;font-weight:800;font-size:14px;cursor:pointer}.searchbox button:hover{filter:brightness(1.1)}
+.tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:20px 0 25px}.tab{border:1px solid var(--line);background:#0f1728;color:#b9c5dc;border-radius:999px;padding:9px 15px;font-size:13px;cursor:pointer}.tab.active{background:#25244c;border-color:#8b7cff;color:white;box-shadow:inset 0 0 0 1px #8b7cff44}
+.engines{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;color:var(--muted);font-size:12px}.engine{border:1px solid var(--line);background:#0e1524;color:#dce5f8;border-radius:9px;padding:7px 11px;cursor:pointer}.engine.active{border-color:#54d9c5;color:#68e6d3}.hint{font-size:12px;color:#7f8ca6;margin-top:28px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:760px;margin:50px auto 0;text-align:left}.card{border:1px solid #202c43;background:#0e1524b8;border-radius:16px;padding:16px}.card b{display:block;font-size:13px;margin:8px 0 4px}.card p{font-size:12px;line-height:1.5;color:var(--muted);margin:0}.ico{font-size:19px}
+footer{margin:auto auto 20px;width:min(1120px,92%);text-align:center;color:#65728c;font-size:11px;line-height:1.7}
+@media(max-width:600px){header{margin-top:16px}.tag{display:none}main{margin-top:80px}.searchbox{border-radius:16px}.searchbox input{padding:10px 8px;font-size:14px}.searchbox button{padding:0 15px}.cards{grid-template-columns:1fr;margin-top:35px}.hero{font-size:48px}}
+</style>
+</head>
+<body>
+<header><div class="brand"><div class="mark">S</div><span>SIARA</span></div><div class="tag">SEARCH BEYOND LIMITS</div></header>
+<main>
+<div class="eyebrow">Your web search launchpad</div>
+<h1 class="hero">Find more.<br><span>Think further.</span></h1>
+<p class="sub">One clean place to start your search across the web, images, videos, news and academic research.</p>
+<form class="searchbox" id="searchForm"><input id="q" autocomplete="off" autofocus placeholder="Ask anything or search the web…" aria-label="Search query"><button type="submit">Search ↗</button></form>
+<div class="tabs" role="group" aria-label="Search category">
+<button class="tab active" data-mode="web">🌐 Web</button><button class="tab" data-mode="images">▧ Images</button><button class="tab" data-mode="videos">▶ Videos</button><button class="tab" data-mode="news">◉ News</button><button class="tab" data-mode="academic">✧ Academic</button><button class="tab" data-mode="social">◎ Social</button>
+</div>
+<div class="engines"><span>Search with</span><button class="engine active" data-engine="google">Google</button><button class="engine" data-engine="bing">Bing</button><button class="engine" data-engine="ddg">DuckDuckGo</button></div>
+<p class="hint">Choose a category, type your query, and press Enter.</p>
+<section class="cards">
+<div class="card"><div class="ico">🌐</div><b>Explore the web</b><p>Start with broad web results and discover useful pages.</p></div>
+<div class="card"><div class="ico">🎬</div><b>Visual discovery</b><p>Jump straight to image and video searches.</p></div>
+<div class="card"><div class="ico">📚</div><b>Learn & research</b><p>Find academic papers, news and community discussions.</p></div>
+</section>
+</main>
+<footer>SIARA is an independent search launchpad. Searches are handled by the search provider you select; SIARA does not crawl or index the entire internet itself.<br>© 2026 SIARA · Built for curious minds</footer>
+<script>
+let mode='web',engine='google';
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');mode=b.dataset.mode}));
+document.querySelectorAll('.engine').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.engine').forEach(x=>x.classList.remove('active'));b.classList.add('active');engine=b.dataset.engine}));
+function target(q){const e=engine;const enc=encodeURIComponent(q);
+const routes={
+google:{web:'https://www.google.com/search?q='+enc,images:'https://www.google.com/search?tbm=isch&q='+enc,videos:'https://www.google.com/search?tbm=vid&q='+enc,news:'https://news.google.com/search?q='+enc,academic:'https://scholar.google.com/scholar?q='+enc,social:'https://www.google.com/search?q='+enc+'+site%3Areddit.com+OR+site%3Aquora.com'},
+bing:{web:'https://www.bing.com/search?q='+enc,images:'https://www.bing.com/images/search?q='+enc,videos:'https://www.bing.com/videos/search?q='+enc,news:'https://www.bing.com/news/search?q='+enc,academic:'https://www.google.com/search?q='+enc+'+research+paper',social:'https://www.bing.com/search?q='+enc+'+site%3Areddit.com'},
+ddg:{web:'https://duckduckgo.com/?q='+enc,images:'https://duckduckgo.com/?q='+enc+'&iax=images&ia=images',videos:'https://duckduckgo.com/?q='+enc+'&iax=videos&ia=videos',news:'https://duckduckgo.com/?q='+enc+'&iar=news&ia=news',academic:'https://scholar.google.com/scholar?q='+enc,social:'https://duckduckgo.com/?q='+enc+'+site%3Areddit.com'}
+};return routes[e][mode]||routes[e].web}
+document.getElementById('searchForm').addEventListener('submit',e=>{e.preventDefault();const q=document.getElementById('q').value.trim();if(!q){document.getElementById('q').focus();return}location.href=target(q)});
+</script>
+</body></html>
