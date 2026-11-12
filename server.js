@@ -96,7 +96,7 @@ app.get("/api/siara/search", async (req, res) => {
         category: String(item.category || category),
         thumbnail: typeof item.thumbnail === "string" ? item.thumbnail : null,
         publishedDate: item.publishedDate || null
-      })).filter((item) => /^https?:\\/\\//i.test(item.url));
+      })).filter((item) => { try { return ["http:", "https:"].includes(new URL(item.url).protocol); } catch { return false; } });
       return res.json({ query: q, category: mode, results, provider: new URL(base).hostname });
     } catch (error) {
       lastError = String(error?.message || lastError).slice(0, 180);
