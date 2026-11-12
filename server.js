@@ -59,22 +59,67 @@ app.post("/api/chat", async (req, res) => {
 });
 
 
-const searchProviders = [
+const fixedSearchProviders = [
   process.env.SEARXNG_URL,
-  "https://searx.be",
-  "https://search.sapti.me",
-  "https://searx.tiekoetter.com"
+  "https://searx.be", "https://search.sapti.me", "https://searx.tiekoetter.com",
+  "https://search.bus-hit.me", "https://searxng.site"
 ].filter(Boolean);
+
+const decodeHtml = (value = "") => String(value)
+  .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+  .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+  .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)));
+
+function parseHtmlSearch(html, category) {
+  const results = [];
+  const re = /<a[^>]+class=["'][^"']*(?:result__a|result-link)[^"']*["'][^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    try {
+      let url = decodeHtml(m[1]);
+      if (url.startsWith("//")) url = "https:" + url;
+      if (url.startsWith("/url?")) url = new URL(url, "https://html.duckduckgo.com").searchParams.get("uddg") || url;
+      const title = decodeHtml(m[2].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ")).trim();
+      if (!title || !["http:", "https:"].includes(new URL(url).protocol)) continue;
+      results.push({ title, url, snippet: "", source: new URL(url).hostname, category });
+    } catch {}
+  }
+  return results;
+}
+
+let cachedInstances = [];
+let instanceCacheAt = 0;
+async function getSearxInstances() {
+  if (cachedInstances.length && Date.now() - instanceCacheAt < 600000) return cachedInstances;
+  try {
+    const response = await fetch("https://searx.space/data/instances.json", {
+      headers: { "Accept": "application/json", "User-Agent": "SIARA/1.0" },
+      signal: AbortSignal.timeout(5000)
+    });
+    if (response.ok) {
+      const data = await response.json();
+      const entries = Object.entries(data.instances || {}).filter(([url, info]) =>
+        /^https:\/\//.test(url) && !info?.network_type?.includes("onion") &&
+        (info?.http?.status_code === 200 || info?.http?.status_code == null)
+      );
+      cachedInstances = entries.slice(0, 30).map(([url]) => url.replace(/\/$/, ""));
+      instanceCacheAt = Date.now();
+    }
+  } catch {}
+  return [...new Set([...fixedSearchProviders, ...cachedInstances])];
+}
 
 app.get("/api/siara/search", async (req, res) => {
   const q = String(req.query.q || "").trim().slice(0, 240);
-  const mode = String(req.query.category || "general").toLowerCase();
+  const mode = String(req.query.category || "web").toLowerCase();
   if (!q) return res.status(400).json({ error: "Type something to search." });
   const categoryMap = { web: "general", general: "general", images: "images", videos: "videos", news: "news", academic: "science", social: "general" };
   const category = categoryMap[mode] || "general";
-  const query = mode === "social" ? `${q} (site:reddit.com OR site:quora.com)` : q;
-  let lastError = "Search providers are temporarily unavailable.";
-  for (const base of searchProviders) {
+  const query = mode === "social" ? q + " site:reddit.com OR site:quora.com" : q;
+  const providers = await getSearxInstances();
+  let lastError = "Search sources are temporarily busy.";
+
+  for (const base of providers.slice(0, 14)) {
     try {
       const endpoint = new URL("/search", base);
       endpoint.searchParams.set("q", query);
@@ -83,31 +128,62 @@ app.get("/api/siara/search", async (req, res) => {
       endpoint.searchParams.set("language", "en");
       const response = await fetch(endpoint, {
         headers: {
-          "Accept": "application/json, text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept": "application/json",
           "Accept-Language": "en-US,en;q=0.9,hi;q=0.8",
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          "User-Agent": "Mozilla/5.0 (compatible; SIARA/1.0; integrated search)",
           "Referer": base + "/"
         },
-        signal: AbortSignal.timeout(9000)
+        signal: AbortSignal.timeout(5000)
       });
-      if (!response.ok) { lastError = `Search source returned ${response.status}.`; continue; }
-      const data = await response.json();
-      if (!Array.isArray(data.results)) { lastError = "Search source returned an unsupported response."; continue; }
-      const results = data.results.slice(0, 20).map((item) => ({
-        title: String(item.title || "Untitled result").slice(0, 300),
-        url: String(item.url || ""),
-        snippet: String(item.content || item.title || "").slice(0, 700),
-        source: String(item.engine || item.source || "Web"),
-        category: String(item.category || category),
-        thumbnail: typeof item.thumbnail === "string" ? item.thumbnail : null,
-        publishedDate: item.publishedDate || null
-      })).filter((item) => { try { return ["http:", "https:"].includes(new URL(item.url).protocol); } catch { return false; } });
-      return res.json({ query: q, category: mode, results, provider: new URL(base).hostname });
+      if (!response.ok) { lastError = "Search source returned " + response.status + "."; continue; }
+      const raw = await response.text();
+      let items = [];
+      try {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.results)) items = data.results.map(item => ({
+          title: String(item.title || "Untitled result").slice(0, 300),
+          url: String(item.url || ""),
+          snippet: String(item.content || item.title || "").slice(0, 700),
+          source: String(item.engine || item.source || "Web"),
+          category: String(item.category || category),
+          thumbnail: typeof item.thumbnail === "string" ? item.thumbnail : null,
+          publishedDate: item.publishedDate || null
+        }));
+      } catch {
+        items = parseHtmlSearch(raw, category);
+      }
+      items = items.filter(item => {
+        try { return ["http:", "https:"].includes(new URL(item.url).protocol); } catch { return false; }
+      });
+      if (items.length) return res.json({ query: q, category: mode, results: items.slice(0, 20), provider: new URL(base).hostname });
+      lastError = "Search source returned no readable results.";
     } catch (error) {
       lastError = String(error?.message || lastError).slice(0, 180);
     }
   }
-  return res.status(503).json({ error: lastError, hint: "Try again in a moment; free public search sources can be busy." });
+
+  try {
+    const endpoint = new URL("https://html.duckduckgo.com/html/");
+    endpoint.searchParams.set("q", query);
+    const response = await fetch(endpoint, {
+      headers: {
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36"
+      },
+      signal: AbortSignal.timeout(9000)
+    });
+    if (response.ok) {
+      const html = await response.text();
+      const results = parseHtmlSearch(html, category).slice(0, 20);
+      if (results.length) return res.json({ query: q, category: mode, results, provider: "DuckDuckGo HTML" });
+      lastError = "Search providers did not return readable results.";
+    } else lastError = "Fallback search returned " + response.status + ".";
+  } catch (error) {
+    lastError = String(error?.message || lastError).slice(0, 180);
+  }
+
+  return res.status(503).json({ error: lastError, hint: "Search providers are temporarily unavailable. Please retry in a moment." });
 });
 
 app.listen(PORT, () => {
