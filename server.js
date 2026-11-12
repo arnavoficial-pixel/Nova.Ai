@@ -13,6 +13,7 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: "6mb" }));
 app.use("/api/", rateLimit({ windowMs: 60_000, limit: 25, standardHeaders: "draft-7", legacyHeaders: false }));
 app.use(express.static("public"));
+app.use("/siara", express.static("siara", { index: "index.html" }));
 
 app.get("/api/health", (_req, res) => res.json({ ok: true, aiConfigured: Boolean(ai) }));
 
