@@ -1,0 +1,19 @@
+use_default_settings: true
+
+general:
+  instance_name: "SIARA Search"
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  formats:
+    - html
+    - json
+
+server:
+  secret_key: "siara-backend-secret-change-before-production-7c9f2e4a"
+  limiter: false
+  image_proxy: true
+  method: "GET"
+  port: 8080
+  bind_address: "0.0.0.0"
