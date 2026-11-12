@@ -82,7 +82,12 @@ app.get("/api/siara/search", async (req, res) => {
       endpoint.searchParams.set("categories", category);
       endpoint.searchParams.set("language", "en");
       const response = await fetch(endpoint, {
-        headers: { "Accept": "application/json", "User-Agent": "SIARA/1.0 (integrated search)" },
+        headers: {
+          "Accept": "application/json, text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9,hi;q=0.8",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          "Referer": base + "/"
+        },
         signal: AbortSignal.timeout(9000)
       });
       if (!response.ok) { lastError = `Search source returned ${response.status}.`; continue; }
